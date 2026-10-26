@@ -17,7 +17,7 @@ export function loadConfig(): Config {
   if (cached) return cached;
   const file = path.join(process.cwd(), "agent.config.json");
   const raw = JSON.parse(readFileSync(file, "utf8")) as Config;
-  raw.data_dir = raw.data_dir.replace(/^~(?=$|\/)/, homedir());
+  raw.data_dir = (process.env.YT_AGENT_DATA_DIR ?? raw.data_dir).replace(/^~(?=$|\/)/, homedir());
   cached = raw;
   return raw;
 }

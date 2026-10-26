@@ -63,12 +63,20 @@ export async function isLoggedIn(page: Page): Promise<boolean> {
   return false;
 }
 
-/** 창이 모두 닫힐 때까지 대기 (수동 로그인용). */
-export function waitForClose(context: BrowserContext): Promise<void> {
-  return new Promise((resolve) => {
-    const check = () => { if (context.pages().length === 0) resolve(); };
-    context.on("close", () => resolve());
-    for (const p of context.pages()) p.on("close", check);
-    context.on("page", (p) => p.on("close", check));
-  });
+/** 수동 로그인 대기: 유튜브에 로그인된 것이 보이거나 창이 모두 닫히면 끝난다. */
+export async function waitForLoginOrClose(context: BrowserContext, timeoutMs = 10 * 60_000): Promise<"logged_in" | "closed" | "timeout"> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const pages = context.pages();
+    if (pages.length === 0) return "closed";
+    for (const p of pages) {
+      if (p.isClosed()) continue;
+      const url = p.url();
+      if (!/youtube\.com/.test(url)) continue;
+      const avatar = await p.locator("ytd-masthead #avatar-btn").first().isVisible().catch(() => false);
+      if (avatar) return "logged_in";
+    }
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+  return "timeout";
 }

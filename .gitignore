@@ -43,3 +43,6 @@ test-video/
 
 # local tool state
 .axhub-state/
+
+# personal notes (local only)
+private/

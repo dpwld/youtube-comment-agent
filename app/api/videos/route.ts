@@ -4,7 +4,7 @@ import { getTopComments } from "@/lib/youtube";
 import { getVideos, parseVideoId, searchVideoIds, withRising } from "@/lib/youtube";
 import { getDraft, hasCommented, latestFetchedAt, listVideos, upsertVideos, saveDraft, type Video } from "@/lib/store";
 import { getTranscript } from "@/lib/transcript";
-import { generateDraft } from "@/lib/draft";
+import { generateDraft, toDraftRow } from "@/lib/draft";
 
 const CACHE_MS = 10 * 60 * 1000;
 
@@ -54,11 +54,7 @@ export async function POST(req: Request) {
     if (existing) return Response.json({ video: decorate([video])[0], draft: existing });
     const [transcript, comments] = await Promise.all([getTranscript(video), getTopComments(video.id)]);
     const r = await generateDraft(video, transcript, comments);
-    saveDraft({
-      video_id: video.id, worry: r.output.worry_one_line, scene_ref: r.output.scene_ref, comment: r.output.comment,
-      transcript_source: transcript.source, valid: r.violations.length === 0 ? 1 : 0, violations: r.violations.join(" / "),
-      attempts: r.attempts, created_at: new Date().toISOString(),
-    });
+    saveDraft(toDraftRow(video.id, transcript, r));
     return Response.json({ video: decorate([video])[0], draft: getDraft(video.id) });
   } catch (e) {
     return errorResponse(e);

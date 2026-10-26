@@ -1,5 +1,5 @@
 import { errorResponse } from "@/lib/api";
-import { generateDraft } from "@/lib/draft";
+import { generateDraft, toDraftRow } from "@/lib/draft";
 import { getDraft, getVideo, saveDraft } from "@/lib/store";
 import { getTranscript } from "@/lib/transcript";
 import { getTopComments } from "@/lib/youtube";
@@ -20,11 +20,7 @@ export async function POST(req: Request, ctx: RouteContext<"/api/videos/[id]/dra
     if (existing && !regen) return Response.json({ draft: existing });
     const [transcript, comments] = await Promise.all([getTranscript(video), getTopComments(video.id)]);
     const r = await generateDraft(video, transcript, comments);
-    saveDraft({
-      video_id: id, worry: r.output.worry_one_line, scene_ref: r.output.scene_ref, comment: r.output.comment,
-      transcript_source: transcript.source, valid: r.violations.length === 0 ? 1 : 0, violations: r.violations.join(" / "),
-      attempts: r.attempts, created_at: new Date().toISOString(),
-    });
+    saveDraft(toDraftRow(id, transcript, r));
     return Response.json({ draft: getDraft(id) });
   } catch (e) {
     return errorResponse(e);

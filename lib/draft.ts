@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
 import { loadConfig } from "./config";
-import type { Video } from "./store";
+import type { Draft, Video } from "./store";
 
 const DraftSchema = z.object({
   worry_one_line: z.string().describe("영상 속 연애 고민을 한 줄로 (60자 이내)"),
@@ -89,4 +89,19 @@ export async function generateDraft(
     messages.push({ role: "user", content: `이전 초안이 규칙을 위반했다: ${violations.join(" / ")}. 같은 영상에 대해 규칙을 지켜 다시 써라.` });
   }
   return { ...last!, attempts: 2 };
+}
+
+/** 생성 결과를 저장용 행으로. 자막 없이 제목·설명만으로 쓴 초안은 장면 인용을 보장할 수 없어 경고(valid=0)로 표시한다. */
+export function toDraftRow(
+  videoId: string,
+  transcript: { source: string },
+  r: { output: DraftOutput; violations: string[]; attempts: number },
+): Draft {
+  const violations = [...r.violations];
+  if (transcript.source === "제목·설명") violations.push("자막이 없어 영상 속 장면을 인용했는지 확인할 수 없음 — 영상을 직접 보고 초안을 고친 뒤 게시하세요");
+  return {
+    video_id: videoId, worry: r.output.worry_one_line, scene_ref: r.output.scene_ref, comment: r.output.comment,
+    transcript_source: transcript.source, valid: violations.length === 0 ? 1 : 0, violations: violations.join(" / "),
+    attempts: r.attempts, created_at: new Date().toISOString(),
+  };
 }

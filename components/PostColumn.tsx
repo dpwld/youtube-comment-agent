@@ -1,5 +1,6 @@
 "use client";
 
+import Lane from "./Lane";
 import { JOB_LABEL, type Draft, type Job, type ProfileInfo, type VideoRow } from "@/lib/types";
 
 type Props = {
@@ -17,16 +18,21 @@ export default function PostColumn({ video, draft, comment, profiles, autoProfil
   const stepIdx = job ? STEPS.indexOf(job.status) : -1;
 
   return (
-    <section className="flex min-h-[70vh] flex-col rounded-xl border border-zinc-200 bg-white">
-      <div className="border-b border-zinc-100 p-4">
-        <h2 className="text-base font-semibold">③ 댓글 달기</h2>
-        <p className="mt-1 text-xs text-zinc-500">크롬 프로필이 열리고 한 글자씩 입력해 게시한 뒤, 내 댓글이 보이는지 확인해요.</p>
-      </div>
-      <div className="flex-1 space-y-4 overflow-y-auto p-4">
+    <Lane step="STEP 3" tone="mint" title="③ 댓글 달기" lead="크롬 프로필이 열리고 한 글자씩 입력해 게시한 뒤, 내 댓글이 보이는지 확인해요."
+      actions={
+        <>
+          <button onClick={onPost} disabled={!canPost}
+            className="w-full rounded-full bg-accent px-4 py-3 text-sm font-semibold text-white hover:bg-accent-deep disabled:bg-ink/15 disabled:text-ink/40">
+            {chosen ? `${chosen} 프로필로 댓글 달기` : "댓글 달기"}
+          </button>
+          {reason && !running && <p className="mt-2 text-xs text-muted">{reason}</p>}
+        </>
+      }>
+      <div className="space-y-5 p-6">
         <div>
-          <p className="text-xs font-semibold text-zinc-500">프로필</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">프로필</p>
           <select value={profileChoice} onChange={(e) => onProfileChoice(e.target.value)} disabled={running}
-            className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm">
+            className="mt-1.5 w-full rounded-full border border-line bg-white px-4 py-2 text-sm focus:border-accent focus:outline-none">
             <option value="">자동 배정 (순환){autoProfile ? ` → ${autoProfile}` : ""}</option>
             {profiles.map((p) => (
               <option key={p.name} value={p.name} disabled={p.logged_in === false}>
@@ -34,55 +40,50 @@ export default function PostColumn({ video, draft, comment, profiles, autoProfil
               </option>
             ))}
           </select>
-          <ul className="mt-2 space-y-1">
+          <ul className="mt-2 divide-y divide-line/70 rounded-xl border border-line bg-white">
             {profiles.map((p) => (
-              <li key={p.name} className="flex items-center justify-between text-xs text-zinc-600">
-                <span>
-                  <span className={`mr-1 inline-block h-2 w-2 rounded-full ${p.logged_in ? "bg-emerald-500" : p.logged_in === false ? "bg-red-400" : "bg-zinc-300"}`} />
-                  {p.name}
+              <li key={p.name} className="flex items-center justify-between px-3 py-2 text-xs">
+                <span className="flex items-center gap-2">
+                  <span className={`inline-block h-2 w-2 rounded-full ${p.logged_in ? "bg-accent" : p.logged_in === false ? "bg-danger" : "bg-line"}`} />
+                  <span className="font-medium">{p.name}</span>
+                  <span className="text-muted">오늘 {p.today_count}개</span>
                 </span>
-                <span className="flex gap-2">
-                  <button onClick={() => onProfileAction(p.name, "check")} disabled={running} className="hover:underline">상태 확인</button>
-                  <button onClick={() => onProfileAction(p.name, "login")} disabled={running} className="hover:underline">로그인</button>
+                <span className="flex gap-3 text-muted">
+                  <button onClick={() => onProfileAction(p.name, "check")} disabled={running} className="hover:text-ink">상태 확인</button>
+                  <button onClick={() => onProfileAction(p.name, "login")} disabled={running} className="hover:text-ink">로그인</button>
                 </span>
               </li>
             ))}
           </ul>
         </div>
 
-        <button onClick={onPost} disabled={!canPost}
-          className="w-full rounded-lg bg-red-600 px-3 py-3 text-sm font-semibold text-white hover:bg-red-500 disabled:bg-zinc-300">
-          {chosen ? `${chosen} 프로필로 댓글 달기` : "댓글 달기"}
-        </button>
-        {reason && !running && <p className="text-xs text-zinc-500">{reason}</p>}
-
         {job && (
-          <div className="rounded-lg border border-zinc-200 p-3">
-            <p className="text-xs text-zinc-500">진행 상태 · {job.profile}</p>
-            <ol className="mt-2 space-y-1">
+          <div className="rounded-xl border border-line bg-white p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">진행 상태 · {job.profile}</p>
+            <ol className="mt-2 space-y-1.5">
               {STEPS.map((s, i) => {
                 const state = job.status === "failed" ? (i < stepIdx || stepIdx === -1 ? "done" : "idle") : i < stepIdx ? "done" : i === stepIdx ? "now" : "idle";
                 return (
-                  <li key={s} className={`flex items-center gap-2 text-sm ${state === "now" ? "font-semibold text-zinc-900" : state === "done" ? "text-emerald-700" : "text-zinc-400"}`}>
-                    <span>{state === "done" ? "✓" : state === "now" ? "●" : "○"}</span>
+                  <li key={s} className={`flex items-center gap-2 text-sm ${state === "now" ? "font-semibold text-ink" : state === "done" ? "text-accent-deep" : "text-muted/60"}`}>
+                    <span className="w-4 text-center">{state === "done" ? "✓" : state === "now" ? "●" : "○"}</span>
                     <span>{JOB_LABEL[s]}{state === "now" && job.step_detail ? ` (${job.step_detail})` : ""}</span>
                   </li>
                 );
               })}
             </ol>
             {job.status === "done" && job.comment_url && (
-              <a href={job.comment_url} target="_blank" className="mt-2 inline-block rounded-lg bg-emerald-600 px-3 py-1.5 text-sm text-white hover:bg-emerald-500">댓글 보기 ↗</a>
+              <a href={job.comment_url} target="_blank" className="mt-3 inline-block rounded-full bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent-deep">댓글 보기 ↗</a>
             )}
             {job.status === "failed" && (
-              <div className="mt-2 text-sm text-red-700">
+              <div className="mt-3 text-sm text-danger">
                 <p>실패: {job.error}</p>
                 {job.screenshot_path && <a href={`/api/jobs/${job.id}/screenshot`} target="_blank" className="text-xs underline">화면 캡처 보기</a>}
               </div>
             )}
-            {running && <button onClick={onAbort} className="mt-2 text-xs text-zinc-500 underline">강제 종료</button>}
+            {running && <button onClick={onAbort} className="mt-3 text-xs text-muted underline hover:text-ink">강제 종료</button>}
           </div>
         )}
       </div>
-    </section>
+    </Lane>
   );
 }

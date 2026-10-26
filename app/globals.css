@@ -1,9 +1,20 @@
 @import "tailwindcss";
 
+/* 디자인 토큰 — 참고: 세 레인 구조, 네이비 글자 / 연한 하늘 바탕 / 초록 강조 하나 */
 @theme inline {
   --font-sans: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  --color-paper: #f2f7fc;
+  --color-ink: #041424;
+  --color-muted: #5b6b7b;
+  --color-line: #d9e2ec;
+  --color-mint: #e7f4ea;
+  --color-accent: #35b555;
+  --color-accent-deep: #2a9447;
+  --color-danger: #c2410c;
 }
 
 body {
   font-family: var(--font-sans);
+  background: var(--color-paper);
+  color: var(--color-ink);
 }

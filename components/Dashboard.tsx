@@ -126,12 +126,12 @@ export default function Dashboard() {
   const jobRunning = !!job && job.status !== "done" && job.status !== "failed";
 
   return (
-    <main className="mx-auto flex max-w-[1500px] flex-col gap-4 p-5">
-      <header className="flex items-baseline justify-between">
-        <h1 className="text-xl font-bold">유튜브 댓글 에이전트</h1>
-        <p className="text-sm text-zinc-500">오늘 게시 <b className="text-zinc-900">{logState.today_success}</b> / {logState.daily_max} · 영상당 댓글 1개</p>
+    <main className="mx-auto flex max-w-[1500px] flex-col gap-5 px-6 py-5">
+      <header className="flex items-center justify-between">
+        <h1 className="text-base font-semibold tracking-tight">유튜브 댓글 에이전트</h1>
+        <p className="rounded-full border border-line bg-white px-3 py-1 text-xs text-muted">오늘 게시 <b className="text-ink">{logState.today_success}</b> / {logState.daily_max} · 영상당 댓글 1개</p>
       </header>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <VideoColumn mode={mode} videos={videos} loading={loadingVideos} selectedId={selected?.id ?? null}
           onLoad={loadVideos} onSelect={selectVideo} onAddLink={addByLink} />
         <DraftColumn video={selected} draft={draft} comment={comment} loading={loadingDraft}
@@ -141,7 +141,7 @@ export default function Dashboard() {
           onPost={post} onAbort={abort} onProfileAction={profileAction} />
       </div>
       <LogPanel rows={logState.log} />
-      {toast && <div className="fixed bottom-6 left-1/2 -translate-x-1/2 rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white shadow-lg">{toast}</div>}
+      {toast && <div className="fixed bottom-6 left-1/2 -translate-x-1/2 rounded-full bg-ink px-4 py-2 text-sm text-white shadow-lg">{toast}</div>}
     </main>
   );
 }

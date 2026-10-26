@@ -10,7 +10,7 @@ export type Video = {
   views_per_hour?: number; rising?: boolean;
 };
 export type Draft = {
-  video_id: string; worry: string; scene_ref: string; comment: string; transcript_source: string;
+  video_id: string; summary: string; worry: string; scene_ref: string; comment: string; transcript_source: string;
   valid: number; violations: string; attempts: number; created_at: string;
 };
 export type JobStatus =
@@ -67,6 +67,7 @@ export function db(): DatabaseSync {
     d.prepare(`INSERT INTO comment_log (ts, day, video_id, video_title, profile, comment, ok, reason, job_id) VALUES (?,?,?,?,?,?,0,?,?)`)
       .run(now(), kstDay(), j.video_id, v?.title ?? "", j.profile, j.comment, "서버 재시작으로 중단됨", j.id);
   }
+  try { d.exec("ALTER TABLE drafts ADD COLUMN summary TEXT"); } catch { /* 이미 있음 */ }
   g.__ytAgentDb = d;
   return d;
 }
@@ -91,10 +92,10 @@ export function latestFetchedAt(source: Video["source"]): string | null {
 
 // ---- drafts ----
 export function saveDraft(d: Draft): void {
-  db().prepare(`INSERT INTO drafts (video_id,worry,scene_ref,comment,transcript_source,valid,violations,attempts,created_at)
-    VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(video_id) DO UPDATE SET worry=excluded.worry, scene_ref=excluded.scene_ref, comment=excluded.comment,
+  db().prepare(`INSERT INTO drafts (video_id,summary,worry,scene_ref,comment,transcript_source,valid,violations,attempts,created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?) ON CONFLICT(video_id) DO UPDATE SET summary=excluded.summary, worry=excluded.worry, scene_ref=excluded.scene_ref, comment=excluded.comment,
     transcript_source=excluded.transcript_source, valid=excluded.valid, violations=excluded.violations, attempts=excluded.attempts, created_at=excluded.created_at`)
-    .run(d.video_id, d.worry, d.scene_ref, d.comment, d.transcript_source, d.valid, d.violations, d.attempts, d.created_at);
+    .run(d.video_id, d.summary, d.worry, d.scene_ref, d.comment, d.transcript_source, d.valid, d.violations, d.attempts, d.created_at);
 }
 export function getDraft(videoId: string): Draft | null {
   return (db().prepare(`SELECT * FROM drafts WHERE video_id=?`).get(videoId) as Draft | undefined) ?? null;

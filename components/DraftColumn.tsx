@@ -28,11 +28,15 @@ export default function DraftColumn({ video, draft, comment, loading, onChange, 
         {draft && !loading && (
           <>
             <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">AI가 파악한 영상 내용 · 출처: {draft.transcript_source}</p>
+              <p className="mt-1.5 rounded-xl bg-paper px-4 py-3 text-sm leading-relaxed text-ink/80">{draft.summary}</p>
+            </div>
+            <div>
               <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">영상 속 고민 한 줄</p>
               <p className="mt-1.5 rounded-xl bg-paper px-4 py-3 text-sm leading-relaxed">{draft.worry}</p>
             </div>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">댓글이 언급한 장면 (근거) · 출처: {draft.transcript_source}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">댓글이 언급한 장면 (근거)</p>
               <p className="mt-1.5 rounded-xl bg-paper px-4 py-3 text-sm leading-relaxed text-ink/80">{draft.scene_ref}</p>
             </div>
             <div>

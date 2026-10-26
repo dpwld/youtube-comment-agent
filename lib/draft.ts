@@ -5,8 +5,11 @@ import { loadConfig } from "./config";
 import type { Draft, Video } from "./store";
 
 const DraftSchema = z.object({
+  summary: z.string().describe("영상 전체 내용 요약 3~4문장. 무엇에 대한 영상이고 어떤 고민·사연·결론이 나오는지"),
+  key_moments: z.array(z.object({ time: z.string().describe("m:ss"), what: z.string().describe("시청자가 기억할 만한 장면·대사 한 줄") })).min(2).max(5)
+    .describe("본론에 해당하는 핵심 장면 2~5개. 인트로 잡담·광고·인사는 제외"),
   worry_one_line: z.string().describe("영상 속 연애 고민을 한 줄로 (60자 이내)"),
-  scene_ref: z.string().describe("댓글에서 인용한 영상 속 구체적 장면이나 대사 (근거)"),
+  scene_ref: z.string().describe("댓글에서 인용한 장면. key_moments 중 하나여야 하며 시간(m:ss)을 포함"),
   comment: z.string().describe("실제로 달 댓글 본문"),
 });
 export type DraftOutput = z.infer<typeof DraftSchema>;
@@ -35,15 +38,22 @@ export function validateComment(comment: string): string[] {
 
 function systemPrompt(): string {
   const { comment: c } = loadConfig();
-  return `너는 유튜브에서 연애 고민 영상을 막 다 본 평범한 한국인 시청자다. 광고주나 마케터가 아니다.
+  return `너는 유튜브에서 연애 고민 영상을 끝까지 다 본 평범한 한국인 시청자다. 광고주나 마케터가 아니다.
 
-할 일: (1) 이 영상이 다루는 연애 고민을 한 줄로 정리하고, (2) 그 영상 댓글창에 달 댓글을 쓴다.
+입력으로 영상의 자막 전문(자동 생성이라 오타·잘못 들린 단어가 섞여 있음)과 [m:ss] 시간 표시, 설명, 인기 댓글이 주어진다.
+
+반드시 이 순서로 생각하고 출력한다:
+1. summary — 영상 전체를 처음부터 끝까지 읽고 무슨 영상인지 3~4문장으로 요약한다. 자막 오류는 문맥으로 바로잡아 읽는다.
+2. key_moments — 본론에서 시청자가 기억할 만한 장면 2~5개를 시간과 함께 고른다. 인트로 인사·잡담·광고·구독 요청·뜬금없는 단어 하나는 장면이 아니다. 영상의 주제(고민·사연·결론)와 직접 이어진 장면만 고른다.
+3. worry_one_line — 영상 속 연애 고민을 한 줄로.
+4. scene_ref — 댓글에 쓸 장면 하나를 key_moments 중에서 고른다(시간 포함). 영상의 핵심을 본 사람만 알 수 있는 장면이어야 한다.
+5. comment — 댓글.
 
 댓글 규칙:
 - ${c.min_chars}~${c.max_chars}자 (공백 포함). 반말·구어체, ㅠㅠ ㅋㅋ 같은 표현 자연스럽게.
-- 영상 속 구체적인 장면·대사·상황을 하나 이상 직접 언급해서, 이 영상을 본 사람만 쓸 수 있는 댓글이어야 한다. 인용한 근거를 scene_ref 에 적어라.
-- 먼저 영상 내용에 진짜 시청자처럼 공감·반응하고, 그 흐름에서 '${c.brand} 연애사주'를 딱 한 번만 자연스럽게 언급해서 읽는 사람도 한번 보고 싶어지게 만든다. ("잘 본다던데", "나도 한번 보고 싶다" 같은 호기심·소망 톤)
-- 금지: 링크, 해시태그, @멘션, 광고 문구, 이모지 남발, '${c.brand}에서 봤는데/다녀왔는데' 같은 직접 이용 후기 지어내기.
+- scene_ref 의 장면을 구체적으로 언급해서, 영상 본론을 본 사람만 쓸 수 있는 댓글이어야 한다. 요약(summary)과 무관한 내용은 쓰지 않는다.
+- 먼저 그 장면에 진짜 시청자처럼 공감·반응하고, 그 흐름에서 '${c.brand} 연애사주'를 딱 한 번만 자연스럽게 언급해서 읽는 사람도 한번 보고 싶어지게 만든다. ("잘 본다던데", "나도 한번 보고 싶다" 같은 호기심·소망 톤)
+- 금지: 링크, 해시태그, @멘션, 광고 문구, 이모지 남발, '${c.brand}에서 봤는데/다녀왔는데' 같은 직접 이용 후기 지어내기, 댓글 안에 시간 표기(m:ss) 쓰기.
 - 아래 예시는 톤 참고용이다. 문장을 베끼지 말고 이 영상에 맞게 완전히 새로 써라.
 예시: ${EXAMPLE}`;
 }
@@ -53,9 +63,9 @@ function userContent(video: Video, transcript: { text: string; source: string },
     `[제목] ${video.title}`,
     `[채널] ${video.channel}`,
     `[업로드] ${video.published_at.slice(0, 10)}`,
-    `[설명] ${video.description.slice(0, 800)}`,
-    `[영상 내용 — 출처: ${transcript.source}]\n${transcript.text}`,
+    `[설명] ${video.description.slice(0, 1500)}`,
     comments.length ? `[인기 댓글]\n${comments.map((c, i) => `${i + 1}. ${c.slice(0, 200)}`).join("\n")}` : "[인기 댓글] 없음",
+    `[영상 내용 전문 — 출처: ${transcript.source}]\n${transcript.text}`,
   ].join("\n\n");
 }
 
@@ -74,7 +84,7 @@ export async function generateDraft(
   for (let attempt = 1; attempt <= 2; attempt++) {
     const res = await client().messages.parse({
       model: cfg.model,
-      max_tokens: 4000,
+      max_tokens: 6000,
       system: systemPrompt(),
       messages,
       output_config: { effort: "medium", format: zodOutputFormat(DraftSchema) },
@@ -100,7 +110,7 @@ export function toDraftRow(
   const violations = [...r.violations];
   if (transcript.source === "제목·설명") violations.push("자막이 없어 영상 속 장면을 인용했는지 확인할 수 없음 — 영상을 직접 보고 초안을 고친 뒤 게시하세요");
   return {
-    video_id: videoId, worry: r.output.worry_one_line, scene_ref: r.output.scene_ref, comment: r.output.comment,
+    video_id: videoId, summary: r.output.summary, worry: r.output.worry_one_line, scene_ref: r.output.scene_ref, comment: r.output.comment,
     transcript_source: transcript.source, valid: violations.length === 0 ? 1 : 0, violations: violations.join(" / "),
     attempts: r.attempts, created_at: new Date().toISOString(),
   };

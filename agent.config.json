@@ -1,0 +1,8 @@
+{
+  "profiles": ["유튜브1", "유튜브2", "유튜브3"],
+  "comment": { "min_chars": 40, "max_chars": 120, "brand": "운명원" },
+  "limits": { "daily_max_comments": 10 },
+  "search": { "keywords": ["연애 고민"], "rising_keyword": "연애", "max_results": 20 },
+  "model": "claude-opus-5-5",
+  "data_dir": "~/.yt-comment-agent"
+}

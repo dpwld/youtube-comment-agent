@@ -13,8 +13,8 @@ const STEPS: Job["status"][] = ["opening_profile", "navigating", "finding_box", 
 
 export default function PostColumn({ video, draft, comment, profiles, autoProfile, profileChoice, onProfileChoice, job, running, onPost, onAbort, onProfileAction }: Props) {
   const chosen = profileChoice || autoProfile;
-  const canPost = !!video && !!draft && comment.trim().length > 0 && !running && !video.commented && !video.rising;
-  const reason = !video ? "영상을 먼저 골라 주세요" : !draft ? "초안이 아직 없어요" : video.commented ? "이미 댓글을 단 영상이에요" : video.rising ? "'뜨기 직전' 영상은 초안까지만" : running ? "작업 진행 중" : null;
+  const canPost = !!video && !!draft && comment.trim().length > 0 && !running && !video.commented && video.source !== "rising";
+  const reason = !video ? "영상을 먼저 골라 주세요" : !draft ? "초안이 아직 없어요" : video.commented ? "이미 댓글을 단 영상이에요" : video.source === "rising" ? "'뜨기 직전' 영상은 초안까지만" : running ? "작업 진행 중" : null;
   const stepIdx = job ? STEPS.indexOf(job.status) : -1;
 
   return (

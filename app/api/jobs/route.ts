@@ -2,7 +2,6 @@ import { errorResponse } from "@/lib/api";
 import { validateComment } from "@/lib/draft";
 import { startJob } from "@/lib/jobs";
 import { activeJob, getVideo, listProfiles, pickProfile, reserveJob } from "@/lib/store";
-import { withRising } from "@/lib/youtube";
 
 export async function GET() {
   return Response.json({ job: activeJob() });
@@ -14,7 +13,7 @@ export async function POST(req: Request) {
     const { videoId, comment, profile } = (await req.json()) as { videoId: string; comment: string; profile?: string | null };
     const video = getVideo(videoId);
     if (!video) return Response.json({ error: "NOT_FOUND", message: "먼저 영상을 불러와 주세요" }, { status: 404 });
-    if (video.source === "rising" || withRising(video).rising && video.source !== "link" && video.source !== "latest")
+    if (video.source === "rising")
       return Response.json({ error: "DRAFT_ONLY", message: "'뜨기 직전' 영상은 초안까지만 지원해요" }, { status: 400 });
     const violations = validateComment(comment ?? "");
     if (violations.length) return Response.json({ error: "INVALID_COMMENT", message: `댓글 규칙 위반: ${violations.join(" / ")}` }, { status: 400 });

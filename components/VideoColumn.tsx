@@ -48,7 +48,7 @@ export default function VideoColumn({ mode, videos, loading, selectedId, onLoad,
                 <p className="mt-1 text-xs text-muted">{v.channel} · {fmtDate(v.published_at)} · 조회 {fmtNum(v.view_count)}
                   {v.views_per_hour ? ` · ${fmtNum(v.views_per_hour)}/h` : ""}</p>
                 <p className="mt-1.5 flex gap-1 text-[11px]">
-                  {v.rising && <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-amber-800">뜨기 직전 · 초안만</span>}
+                  {v.rising && <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-amber-800">{v.source === "rising" ? "뜨기 직전 · 초안만" : "뜨기 직전"}</span>}
                   {v.commented && <span className="rounded-md bg-accent/15 px-1.5 py-0.5 text-accent-deep">댓글 완료</span>}
                   {v.source === "link" && <span className="rounded-md bg-ink/5 px-1.5 py-0.5 text-muted">링크 입력</span>}
                 </p>

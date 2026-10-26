@@ -74,7 +74,7 @@ async function runJob(job: Job, live: Live): Promise<void> {
     const current = getJob(job.id);
     if (current && current.status !== "failed" && current.status !== "done") {
       const msg = e instanceof Error ? e.message.split("\n")[0] : String(e);
-      await fail(live.aborted ? "ABORTED" : "UNEXPECTED", live.aborted ? "중단됨" : msg);
+      await fail(live.aborted ? "ABORTED" : "UNEXPECTED", live.aborted ? "사용자가 중단했거나 시간(180초)을 초과했습니다" : msg);
     }
   } finally {
     clearTimeout(timer);

@@ -13,7 +13,7 @@ export default function DraftColumn({ video, draft, comment, loading, onChange, 
   return (
     <Lane step="STEP 2" title="② 영상 선택" lead="목록에서 영상을 고르면 AI가 고민 한 줄과 댓글 초안을 만들어요.">
       <div className="space-y-5 p-6">
-        {!video && <p className="text-sm text-muted">왼쪽 목록에서 영상을 골라 주세요.</p>}
+        {!video && !loading && <p className="text-sm text-muted">왼쪽 목록에서 영상을 골라 주세요.</p>}
         {video && (
           <div className="flex gap-3">
             <img src={video.thumbnail} alt="" className="h-20 w-36 rounded-lg object-cover" />

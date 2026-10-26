@@ -94,13 +94,13 @@ export default function Dashboard() {
   };
 
   const addByLink = async (url: string) => {
-    setLoadingVideos(true);
+    setLoadingVideos(true); setLoadingDraft(true); setSelected(null); setDraft(null); setComment("");
     try {
       const r = await api<{ video: VideoRow; draft: Draft }>("/api/videos", { method: "POST", body: JSON.stringify({ url }) });
       setVideos((vs) => [r.video, ...vs.filter((v) => v.id !== r.video.id)]);
       setSelected(r.video); setDraft(r.draft); setComment(r.draft.comment);
     } catch (e) { notify((e as Error).message); }
-    finally { setLoadingVideos(false); }
+    finally { setLoadingVideos(false); setLoadingDraft(false); }
   };
 
   const post = async () => {

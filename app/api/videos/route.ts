@@ -50,6 +50,8 @@ export async function POST(req: Request) {
     const [video] = await getVideos([id], "link");
     if (!video) return Response.json({ error: "NOT_FOUND", message: "영상을 찾을 수 없어요" }, { status: 404 });
     upsertVideos([video]);
+    const existing = getDraft(video.id);
+    if (existing) return Response.json({ video: decorate([video])[0], draft: existing });
     const [transcript, comments] = await Promise.all([getTranscript(video), getTopComments(video.id)]);
     const r = await generateDraft(video, transcript, comments);
     saveDraft({

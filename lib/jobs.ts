@@ -22,23 +22,28 @@ export async function abortJob(jobId: string): Promise<boolean> {
   const live = reg.live;
   if (!live || live.jobId !== jobId) return false;
   live.aborted = true;
+  await captureScreenshot(live, jobId); // 창을 닫기 전에 화면을 남긴다
   await live.context?.close().catch(() => {});
   return true;
+}
+
+async function captureScreenshot(live: Live, jobId: string): Promise<string | null> {
+  try {
+    const page = live.context?.pages()[0];
+    if (!page || page.isClosed()) return null;
+    mkdirSync(screenshotsDir(), { recursive: true });
+    const file = path.join(screenshotsDir(), `${jobId}.png`);
+    await page.screenshot({ path: file, fullPage: false });
+    updateJob(jobId, { screenshot_path: file });
+    return file;
+  } catch { return null; }
 }
 
 async function runJob(job: Job, live: Live): Promise<void> {
   const video = getVideo(job.video_id);
   const title = video?.title ?? job.video_id;
   const fail = async (code: string, message: string) => {
-    let screenshot: string | null = null;
-    try {
-      const page = live.context?.pages()[0];
-      if (page && !page.isClosed()) {
-        mkdirSync(screenshotsDir(), { recursive: true });
-        screenshot = path.join(screenshotsDir(), `${job.id}.png`);
-        await page.screenshot({ path: screenshot, fullPage: false });
-      }
-    } catch { screenshot = null; }
+    const screenshot = (await captureScreenshot(live, job.id)) ?? getJob(job.id)?.screenshot_path ?? null;
     updateJob(job.id, { status: "failed", error: `${code}: ${message}`, screenshot_path: screenshot });
     logComment({ video_id: job.video_id, video_title: title, profile: job.profile, comment: job.comment, ok: 0, reason: `${code}: ${message}`, job_id: job.id });
   };

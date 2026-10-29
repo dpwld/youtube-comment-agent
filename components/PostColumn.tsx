@@ -15,7 +15,8 @@ export default function PostColumn({ video, draft, comment, profiles, autoProfil
   const chosen = profileChoice || autoProfile;
   const canPost = !!video && !!draft && comment.trim().length > 0 && !running && !video.commented && video.source !== "rising";
   const reason = !video ? "영상을 먼저 골라 주세요" : !draft ? "초안이 아직 없어요" : video.commented ? "이미 댓글을 단 영상이에요" : video.source === "rising" ? "'뜨기 직전' 영상은 초안까지만" : running ? "작업 진행 중" : null;
-  const stepIdx = job ? STEPS.indexOf(job.status) : -1;
+  const failed = job?.status === "failed";
+  const stepIdx = job ? STEPS.indexOf((failed ? job.step_detail : job.status) as Job["status"]) : -1;
 
   return (
     <Lane step="STEP 3" tone="mint" title="③ 댓글 달기" lead="크롬 프로필이 열리고 한 글자씩 입력해 게시한 뒤, 내 댓글이 보이는지 확인해요."
@@ -62,10 +63,10 @@ export default function PostColumn({ video, draft, comment, profiles, autoProfil
             <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">진행 상태 · {job.profile}</p>
             <ol className="mt-2 space-y-1.5">
               {STEPS.map((s, i) => {
-                const state = job.status === "failed" ? (i < stepIdx || stepIdx === -1 ? "done" : "idle") : i < stepIdx ? "done" : i === stepIdx ? "now" : "idle";
+                const state = failed ? (i < stepIdx ? "done" : i === stepIdx ? "fail" : "idle") : i < stepIdx ? "done" : i === stepIdx ? "now" : "idle";
                 return (
-                  <li key={s} className={`flex items-center gap-2 text-sm ${state === "now" ? "font-semibold text-ink" : state === "done" ? "text-accent-deep" : "text-muted/60"}`}>
-                    <span className="w-4 text-center">{state === "done" ? "✓" : state === "now" ? "●" : "○"}</span>
+                  <li key={s} className={`flex items-center gap-2 text-sm ${state === "now" ? "font-semibold text-ink" : state === "done" ? "text-accent-deep" : state === "fail" ? "font-semibold text-danger" : "text-muted/60"}`}>
+                    <span className="w-4 text-center">{state === "done" ? "✓" : state === "now" ? "●" : state === "fail" ? "✕" : "○"}</span>
                     <span>{JOB_LABEL[s]}{state === "now" && job.step_detail ? ` (${job.step_detail})` : ""}</span>
                   </li>
                 );

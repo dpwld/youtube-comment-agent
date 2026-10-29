@@ -44,7 +44,8 @@ async function runJob(job: Job, live: Live): Promise<void> {
   const title = video?.title ?? job.video_id;
   const fail = async (code: string, message: string) => {
     const screenshot = (await captureScreenshot(live, job.id)) ?? getJob(job.id)?.screenshot_path ?? null;
-    updateJob(job.id, { status: "failed", error: `${code}: ${message}`, screenshot_path: screenshot });
+    const reached = getJob(job.id)?.status; // 실패 직전까지 간 단계 (화면 표시용)
+    updateJob(job.id, { status: "failed", step_detail: reached && reached !== "failed" ? reached : null, error: `${code}: ${message}`, screenshot_path: screenshot });
     logComment({ video_id: job.video_id, video_title: title, profile: job.profile, comment: job.comment, ok: 0, reason: `${code}: ${message}`, job_id: job.id });
   };
 

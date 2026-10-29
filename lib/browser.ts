@@ -1,5 +1,6 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { mkdirSync } from "node:fs";
+import path from "node:path";
 import { chromium, type BrowserContext, type Page } from "playwright";
 import { profileDir } from "./config";
 
@@ -28,6 +29,8 @@ export async function openProfile(name: string, opts: { headless?: boolean } = {
   registry.openProfiles.add(name);
   try {
     const userAgent = chromeUserAgent();
+    // 시연 녹화용: YT_AGENT_RECORD_DIR 이 있으면 이 창의 화면을 webm 으로 남긴다.
+    const recordDir = process.env.YT_AGENT_RECORD_DIR;
     const context = await chromium.launchPersistentContext(dir, {
       channel: "chrome",
       headless: opts.headless ?? false,
@@ -36,7 +39,9 @@ export async function openProfile(name: string, opts: { headless?: boolean } = {
       args: ["--disable-blink-features=AutomationControlled", "--lang=ko-KR"],
       ignoreDefaultArgs: ["--enable-automation"],
       ...(userAgent ? { userAgent } : {}),
+      ...(recordDir ? { recordVideo: { dir: recordDir, size: { width: 1280, height: 900 } } } : {}),
     });
+    if (recordDir) writeFileSync(path.join(recordDir, `profile-start-${Date.now()}.json`), JSON.stringify({ profile: name, startedAt: Date.now() }));
     context.setDefaultTimeout(30_000);
     context.on("close", () => registry.openProfiles.delete(name));
     return context;

@@ -6,7 +6,7 @@ export default function Lane({
   actions?: React.ReactNode; children: React.ReactNode;
 }) {
   return (
-    <section className={`flex min-h-[72vh] flex-col rounded-2xl border border-line ${tone === "mint" ? "bg-mint" : "bg-white"}`}>
+    <section className={`flex min-h-[72vh] flex-col rounded-2xl border border-line lg:h-[calc(100vh-88px)] lg:min-h-[560px] ${tone === "mint" ? "bg-mint" : "bg-white"}`}>
       <div className="p-6 pb-4">
         <span className="inline-block rounded-md bg-accent/15 px-2 py-0.5 text-[11px] font-semibold tracking-wide text-accent-deep">{step}</span>
         <h2 className="mt-3 text-2xl font-semibold leading-tight tracking-tight">{title}</h2>

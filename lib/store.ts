@@ -139,13 +139,20 @@ export function getJob(id: string): Job | null {
 export function hasCommented(videoId: string): boolean {
   return !!db().prepare(`SELECT 1 FROM comment_log WHERE video_id=? AND ok=1`).get(videoId);
 }
-/** 운영 규칙은 전부 여기서 강제한다 (영상당 1개 · 한 번에 하나 · 일일 상한). */
+/** 다른 영상에 이미 게시한 것과 같은 댓글인지 (공백 무시). */
+export function isReusedComment(comment: string): boolean {
+  const norm = (s: string) => s.replace(/\s+/g, "");
+  const rows = db().prepare(`SELECT comment FROM comment_log WHERE ok=1`).all() as { comment: string }[];
+  return rows.some((r) => norm(r.comment) === norm(comment));
+}
+/** 운영 규칙은 전부 여기서 강제한다 (영상당 1개 · 영상마다 다른 댓글 · 한 번에 하나 · 일일 상한). */
 export function reserveJob(videoId: string, profile: string, comment: string): Job {
   const d = db();
   const cfg = loadConfig();
   d.exec("BEGIN IMMEDIATE");
   try {
     if (hasCommented(videoId)) throw new RuleError("ALREADY_COMMENTED", "이미 댓글을 단 영상이에요 (영상당 1개)", 409);
+    if (isReusedComment(comment)) throw new RuleError("DUPLICATE_COMMENT", "다른 영상에 이미 단 댓글과 같아요 (영상마다 다르게)", 409);
     if (activeJob()) throw new RuleError("BUSY", "다른 댓글 작업이 진행 중이에요. 끝난 뒤 다시 눌러 주세요", 409);
     const n = todayCount();
     if (n >= cfg.limits.daily_max_comments) throw new RuleError("DAILY_CAP", `오늘 게시 상한(${cfg.limits.daily_max_comments}개)에 도달했어요`, 429);

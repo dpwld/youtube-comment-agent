@@ -71,9 +71,12 @@ The prompt and validators are in [`lib/draft.ts`](lib/draft.ts); the transcript 
 Enforced in [`lib/store.ts`](lib/store.ts) inside one transaction, not in the UI:
 
 - **One comment per video**, backed by a partial unique index on successful log rows.
+- **A different comment for every video**: text already posted on another video is rejected.
 - **Daily cap** (default 10, Asia/Seoul day), reserved when a job starts.
 - **One job at a time**; a stale job left by a server restart is marked failed and logged.
 - **Log** of every attempt with time, video, profile, comment, outcome, reason and screenshot.
+
+`npm test` checks these rules and the comment rules against a throwaway data folder (no browser, no API calls).
 
 Configuration lives in [`agent.config.json`](agent.config.json):
 
@@ -106,6 +109,7 @@ app/api/        route handlers: videos, drafts, profiles, jobs, log
 components/     the three columns and the log panel
 lib/            youtube.ts · transcript.ts · draft.ts · browser.ts · poster.ts · jobs.ts · store.ts
 scripts/        login.ts (manual sign-in) · spike.ts (selector check)
+tests/          rules.test.ts (operating and comment rules)
 docs/           screenshots
 ```
 
